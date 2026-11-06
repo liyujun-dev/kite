@@ -267,17 +267,30 @@ func (h *Handler) authorize(c *gin.Context) {
 		oauthError(c, http.StatusInternalServerError, "server_error", "failed to build consent request")
 		return
 	}
-	page := consentPage{
-		ClientName:  client.Name,
-		ClientID:    client.ClientID,
-		RedirectURI: params.RedirectURI,
-		Scope:       mcpScope,
-		Issuer:      h.issuerURL(c.Request),
-		Request:     h.tokens.signConsent(payload),
-		Action:      common.Base + "/api/oauth/authorize",
+
+	lang := consentLanguage(c)
+	texts := consentTexts[lang]
+	clientName := client.Name
+	if clientName == "" {
+		clientName = client.ClientID
 	}
-	if page.ClientName == "" {
-		page.ClientName = client.ClientID
+	account := user.Username
+	if user.Name != "" && user.Name != user.Username {
+		account = user.Name + " (" + user.Username + ")"
+	}
+	page := consentPage{
+		Lang:        lang,
+		PageTitle:   texts.Title + " - Kite",
+		LogoURL:     common.Base + "/assets/logo.svg",
+		Action:      common.Base + "/api/oauth/authorize",
+		Request:     h.tokens.signConsent(payload),
+		ClientName:  clientName,
+		Account:     account,
+		RedirectURI: params.RedirectURI,
+		Permission:  texts.PermissionValue,
+		Description: strings.ReplaceAll(texts.Description, "{client}", clientName),
+		Texts:       texts,
+		Languages:   consentLanguageLinks(c, lang),
 	}
 	html, err := renderConsentPage(page)
 	if err != nil {
@@ -288,7 +301,7 @@ func (h *Handler) authorize(c *gin.Context) {
 	// Note: form-action must not be restricted here. After the consent form is
 	// submitted, the authorize endpoint redirects to the OAuth client's callback
 	// (a different origin), and browsers apply form-action to that redirect too.
-	c.Header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; frame-ancestors 'none'")
+	c.Header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'none'")
 	c.Header("X-Frame-Options", "DENY")
 	c.Data(http.StatusOK, "text/html; charset=utf-8", []byte(html))
 }

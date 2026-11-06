@@ -403,6 +403,67 @@ func TestConsentTokenTampering(t *testing.T) {
 	}
 }
 
+func TestConsentLanguage(t *testing.T) {
+	cases := []struct {
+		name   string
+		query  string
+		accept string
+		want   string
+	}{
+		{"chinese accept-language", "", "zh-CN,zh;q=0.9,en;q=0.8", "zh"},
+		{"english accept-language", "", "en-US,en;q=0.9", "en"},
+		{"unknown falls back to english", "", "fr-FR,fr;q=0.9", "en"},
+		{"query overrides header to chinese", "lang=zh", "en-US", "zh"},
+		{"query overrides header to english", "lang=en", "zh-CN", "en"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, _ := gin.CreateTestContext(httptest.NewRecorder())
+			c.Request = httptest.NewRequest(http.MethodGet, "/api/oauth/authorize?"+tc.query, nil)
+			if tc.accept != "" {
+				c.Request.Header.Set("Accept-Language", tc.accept)
+			}
+			if got := consentLanguage(c); got != tc.want {
+				t.Fatalf("consentLanguage() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestConsentPageLocalization(t *testing.T) {
+	engine := newTestRouter(t)
+	user := createTestUser(t, "consent-i18n")
+	client := registerTestClient(t, engine, "none")
+	clientID := client["client_id"].(string)
+	_, challenge := pkcePair(t)
+
+	fetch := func(lang string) string {
+		t.Helper()
+		request := httptest.NewRequest(http.MethodGet, authorizeURLFor(clientID, challenge)+"&lang="+lang, nil)
+		request.AddCookie(authCookie(t, user))
+		recorder := httptest.NewRecorder()
+		engine.ServeHTTP(recorder, request)
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("consent page (%s): status %d body %s", lang, recorder.Code, recorder.Body.String())
+		}
+		return recorder.Body.String()
+	}
+
+	zh := fetch("zh")
+	for _, want := range []string{"拒绝", "授权", "/assets/logo.svg", `lang="zh"`} {
+		if !strings.Contains(zh, want) {
+			t.Errorf("Chinese consent page missing %q", want)
+		}
+	}
+
+	en := fetch("en")
+	for _, want := range []string{"Deny", "Authorize", "/assets/logo.svg", `lang="en"`} {
+		if !strings.Contains(en, want) {
+			t.Errorf("English consent page missing %q", want)
+		}
+	}
+}
+
 func TestResolveRedirectURIValidation(t *testing.T) {
 	valid := []string{
 		"https://example.com/callback",

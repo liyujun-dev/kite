@@ -1499,5 +1499,17 @@
   "secret": {
     "showBase64": "显示 Base64",
     "decodeValues": "解码值"
+  },
+  "mcpGuide": {
+    "title": "通过 MCP 连接",
+    "description": "使用 Claude Code、Cursor 等 MCP 客户端。",
+    "endpointLabel": "MCP 端点",
+    "copy": "复制",
+    "copied": "已复制到剪贴板",
+    "jsonLabel": "MCP JSON 配置",
+    "claudeLabel": "Claude Code",
+    "claudeCommand": "claude mcp add --transport http kite {{endpoint}}",
+    "hint": "首次连接会打开浏览器登录并授权，工具权限跟随你的 RBAC 角色。",
+    "openApiKeys": "API Keys"
   }
 }

@@ -1412,5 +1412,17 @@
   "secret": {
     "showBase64": "Show Base64",
     "decodeValues": "Decode Values"
+  },
+  "mcpGuide": {
+    "title": "Connect via MCP",
+    "description": "Use Claude Code, Cursor, or another MCP client.",
+    "endpointLabel": "MCP endpoint",
+    "copy": "Copy",
+    "copied": "Copied to clipboard",
+    "jsonLabel": "MCP JSON config",
+    "claudeLabel": "Claude Code",
+    "claudeCommand": "claude mcp add --transport http kite {{endpoint}}",
+    "hint": "The first connection opens a browser to sign in and authorize. Tools follow your RBAC permissions.",
+    "openApiKeys": "API Keys"
   }
 }

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useAuth } from '@/contexts/auth-context'
 import { useTerminal } from '@/contexts/terminal-context'
-import { Plus, Settings, TerminalSquare } from 'lucide-react'
+import { Bot, Plus, Settings, TerminalSquare } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -12,6 +13,7 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 import { CreateResourceDialog } from './create-resource-dialog'
 import { DynamicBreadcrumb } from './dynamic-breadcrumb'
 import { LanguageToggle } from './language-toggle'
+import { MCPGuideDialog } from './mcp-guide-dialog'
 import { ModeToggle } from './mode-toggle'
 import { Search } from './search'
 import { UserMenu } from './user-menu'
@@ -19,9 +21,11 @@ import { UserMenu } from './user-menu'
 export function SiteHeader() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { user, capabilities } = useAuth()
   const { toggleTerminal, isOpen } = useTerminal()
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [mcpGuideOpen, setMcpGuideOpen] = useState(false)
   const isAdmin = user?.isAdmin() ?? false
   const kubectlEnabled = capabilities.kubectlEnabled
 
@@ -37,6 +41,14 @@ export function SiteHeader() {
           <DynamicBreadcrumb />
           <div className="ml-auto flex items-center gap-2">
             <Search />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMcpGuideOpen(true)}
+              aria-label={t('mcpGuide.title')}
+            >
+              <Bot className="h-5 w-5" />
+            </Button>
             <Plus
               className="h-5 w-5 cursor-pointer text-muted-foreground hover:text-foreground"
               onClick={() => setCreateDialogOpen(true)}
@@ -88,6 +100,7 @@ export function SiteHeader() {
           onOpenChange={setCreateDialogOpen}
         />
       ) : null}
+      <MCPGuideDialog open={mcpGuideOpen} onOpenChange={setMcpGuideOpen} />
     </>
   )
 }
