@@ -36,6 +36,11 @@ kubeconfig
 static
 bin
 
+# Local development database (stores user + cluster credentials)
+dev.db
+dev.db-shm
+dev.db-wal
+
 deploy-dev
 
 values-*.yaml

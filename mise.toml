@@ -1,0 +1,314 @@
+# mise.toml — project toolchain and tasks migrated from the Makefile.
+#
+# The Makefile is kept for CI compatibility; every Makefile target has a
+# same-named task here:
+#
+#   make build   ->   mise run build
+#   make deps    ->   mise run deps
+#
+# First-time setup:
+#   mise trust && mise install && mise run deps
+
+[settings]
+# `mise daemons` is experimental.
+experimental = true
+
+# Build metadata injected into the binary, mirroring the Makefile.
+# exec() runs in this config file's directory (the repo root); later [env]
+# entries can interpolate earlier ones.
+[env]
+VERSION = "{{ exec(command='bash scripts/get-version.sh') }}"
+BUILD_DATE = "{{ exec(command='date -u +%Y-%m-%dT%H:%M:%SZ') }}"
+COMMIT_ID = "{{ exec(command='git rev-parse HEAD 2>/dev/null || echo unknown') }}"
+
+# Value of -ldflags only (the "-ldflags" token is not included).
+# Always consume it quoted: go build ... -ldflags "$GO_LDFLAGS"
+# The single quotes are understood by cmd/go's -ldflags parser, not by sh.
+GO_LDFLAGS = "-s -w -X 'github.com/zxh326/kite/pkg/version.Version={{ env.VERSION }}' -X 'github.com/zxh326/kite/pkg/version.BuildDate={{ env.BUILD_DATE }}' -X 'github.com/zxh326/kite/pkg/version.CommitID={{ env.COMMIT_ID }}'"
+
+[tools]
+go = "1.24.9"
+node = "24"
+pnpm = "10"
+golangci-lint = "2.1.6"
+# Local development cluster (see [daemons.kite-cluster] below).
+k3d = "5.9.0"
+kubectl = "1.35.10"
+
+# ---------------------------------------------------------------------------
+# Help / install
+# ---------------------------------------------------------------------------
+
+[tasks.help]
+description = "Show available tasks"
+run = "{{ mise_bin }} tasks ls --no-global"
+
+[tasks.install]
+description = "Install all dependencies"
+depends = ["deps"]
+run = 'echo "📦 Installing dependencies..."'
+
+[tasks.deps]
+description = "Install frontend and backend dependencies"
+run = '''
+echo "📦 Installing frontend dependencies..."
+(cd ui && pnpm install)
+echo "📦 Installing backend dependencies..."
+go mod download
+'''
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+[tasks.build]
+description = "Build both frontend and backend"
+depends = ["frontend", "backend"]
+run = '''
+echo "✅ Build completed successfully!"
+echo "🚀 Run './kite' to start the server"
+'''
+
+[tasks.frontend]
+description = "Build frontend only"
+depends = ["static"]
+
+[tasks.static]
+description = "Build the frontend into ./static"
+sources = [
+  "ui/src/**/*",
+  "ui/tsconfig*.json",
+  "ui/index.html",
+  "ui/package.json",
+  "ui/pnpm-lock.yaml",
+  "ui/vite.config.ts",
+]
+outputs = ["static/index.html"]
+run = '''
+echo "📦 Ensuring static files are built..."
+(cd ui && pnpm run build)
+'''
+
+[tasks.backend]
+description = "Build backend only"
+depends = ["kite"]
+
+[tasks.kite]
+description = "Build the backend binary ./kite"
+depends = ["static"]
+sources = [
+  "internal/**/*.go",
+  "pkg/**/*.go",
+  "static/**/*",
+  "go.mod",
+  "go.sum",
+  "main.go",
+]
+outputs = ["kite"]
+run = '''
+echo "🏗️ Building backend..."
+CGO_ENABLED=0 go build -trimpath -ldflags "$GO_LDFLAGS" -o kite .
+'''
+
+# ---------------------------------------------------------------------------
+# Run
+# ---------------------------------------------------------------------------
+
+[tasks.run]
+description = "Run the built application"
+depends = ["backend"]
+raw = true
+run = "./kite"
+
+[tasks.dev]
+description = "Run in development mode"
+raw = true
+run = '''
+echo "🔄 Starting development mode..."
+echo "🚀 Starting kite server..."
+CGO_ENABLED=0 go build -trimpath -ldflags "$GO_LDFLAGS" -o kite .
+./kite -v=5 &
+BACKEND_PID=$!
+echo "Backend PID: $BACKEND_PID"
+
+cleanup() {
+  if kill -0 "$BACKEND_PID" 2>/dev/null; then
+    echo "🛑 Stopping backend server..."
+    kill "$BACKEND_PID" 2>/dev/null || true
+    wait "$BACKEND_PID" 2>/dev/null || true
+  fi
+}
+trap cleanup EXIT
+trap 'exit 130' INT TERM
+
+echo "🔄 Starting development server..."
+# --host exposes the Vite dev server (and its /api, /ws proxies) on the LAN.
+# pnpm forwards script args directly, so do not add "--" here.
+(cd ui && pnpm run dev --host 0.0.0.0)
+'''
+
+# ---------------------------------------------------------------------------
+# Clean
+# ---------------------------------------------------------------------------
+
+[tasks.clean-frontend]
+description = "Clean frontend build artifacts"
+run = '''
+(cd ui && rm -rf dist node_modules/.vite)
+rm -rf static
+'''
+
+[tasks.clean-backend]
+description = "Clean backend build artifacts"
+run = 'rm -rf kite bin/'
+
+[tasks.clean]
+description = "Clean all build artifacts"
+depends = ["clean-frontend", "clean-backend"]
+run = 'echo "🧹 All build artifacts cleaned!"'
+
+# ---------------------------------------------------------------------------
+# Cross-compile / packaging
+# ---------------------------------------------------------------------------
+
+[tasks.cross-compile]
+description = "Cross-compile for multiple architectures"
+depends = ["frontend"]
+sources = [
+  "internal/**/*.go",
+  "pkg/**/*.go",
+  "static/**/*",
+  "go.mod",
+  "go.sum",
+  "main.go",
+]
+outputs = ["bin/kite-amd64", "bin/kite-arm64"]
+run = '''
+echo "🔄 Cross-compiling for multiple architectures..."
+mkdir -p bin
+GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -ldflags "$GO_LDFLAGS" -o bin/kite-amd64 .
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -ldflags "$GO_LDFLAGS" -o bin/kite-arm64 .
+'''
+
+[tasks.package-release]
+description = "Package everything in bin/ into bin/kite-<version>.tar.gz"
+run = '''
+echo "🔄 Packaging..."
+PKG_VERSION="$(git describe --tags --match 'v*' 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' || true)"
+[ -n "$PKG_VERSION" ] || PKG_VERSION="$(bash scripts/get-version.sh)"
+
+set --
+for f in bin/*; do
+  [ -f "$f" ] || continue
+  case "$f" in
+    *.tar.gz) continue ;;
+  esac
+  set -- "$@" "$f"
+done
+
+if [ "$#" -eq 0 ]; then
+  echo "No files in bin/ to package (run: mise run cross-compile)" >&2
+  exit 1
+fi
+
+tar -czvf "bin/kite-${PKG_VERSION}.tar.gz" "$@"
+'''
+
+[tasks.package-binaries]
+description = "Package each kite binary file separately"
+run = '''
+echo "🔄 Packaging kite binaries separately..."
+PKG_VERSION="$(git describe --tags --match 'v*' 2>/dev/null | grep -oE 'v[0-9]+\.[0-9]+\.[0-9]+' || true)"
+[ -n "$PKG_VERSION" ] || PKG_VERSION="$(bash scripts/get-version.sh)"
+
+for file in bin/kite-*; do
+  [ -f "$file" ] || continue
+  case "$file" in
+    *.tar.gz) continue ;;
+  esac
+  filename=$(basename "$file")
+  echo "📦 Packaging $filename with version $PKG_VERSION..."
+  tar -czvf "bin/${filename}-${PKG_VERSION}.tar.gz" "$file"
+done
+
+echo "✅ All kite binaries packaged successfully!"
+'''
+
+# ---------------------------------------------------------------------------
+# Lint / format / test
+# ---------------------------------------------------------------------------
+
+[tasks.lint]
+description = "Run linters"
+run = '''
+echo "🔍 Running linters..."
+echo "Backend linting..."
+go vet ./...
+golangci-lint run
+echo "Frontend linting..."
+(cd ui && pnpm run lint)
+'''
+
+[tasks.golangci-lint]
+description = "Show the mise-managed golangci-lint version"
+run = 'golangci-lint version'
+
+[tasks.format]
+description = "Format code"
+run = '''
+echo "✨ Formatting code..."
+go fmt ./...
+(cd ui && pnpm run format)
+'''
+
+# Format before lint: depends run in parallel in mise, so lint is invoked
+# from run to keep the Makefile's sequential order.
+[tasks.pre-commit]
+description = "Run pre-commit checks"
+depends = ["format"]
+run = "{{ mise_bin }} run lint"
+
+[tasks.test]
+description = "Run tests"
+run = '''
+echo "🧪 Running tests..."
+go test -v ./...
+'''
+
+# ---------------------------------------------------------------------------
+# Docs (separate VitePress project with its own lockfile)
+# ---------------------------------------------------------------------------
+
+[tasks.docs-dev]
+description = "Start documentation server in development mode"
+run = '''
+echo "📚 Starting documentation server..."
+(cd docs && pnpm run docs:dev)
+'''
+
+[tasks.docs-build]
+description = "Build documentation"
+run = '''
+echo "📚 Building documentation..."
+(cd docs && pnpm run docs:build)
+'''
+
+# ---------------------------------------------------------------------------
+# Local Kubernetes cluster (k3d, managed by `mise daemons`)
+# ---------------------------------------------------------------------------
+
+[daemons.kite-cluster]
+# Starts the k3d cluster if needed and keeps the daemon alive; stopping the
+# daemon stops the cluster. Cluster data is kept between start/stop.
+# Kite imports the k3d-kite-dev context from ~/.kube/config on startup when
+# dev.db has no clusters yet.
+run = "exec bash scripts/dev-cluster.sh"
+ready_cmd = "kubectl --context k3d-kite-dev wait --for=condition=Ready nodes --all --timeout=180s"
+# `k3d cluster stop` stops two containers with Docker's 10s grace period each;
+# give the cleanup trap enough time before pitchfork escalates to SIGKILL.
+stop_signal = { signal = "SIGTERM", timeout = "45s" }
+
+# Mirrors the Makefile's .DEFAULT_GOAL := build for bare `mise run`.
+[tasks.default]
+hide = true
+depends = ["build"]
