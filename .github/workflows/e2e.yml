@@ -9,7 +9,7 @@ concurrency:
 
 on:
   push:
-    branches: [main]
+    branches: [custom]
     paths:
       - ".github/workflows/e2e.yml"
       - "Makefile"
@@ -23,7 +23,7 @@ on:
       - "scripts/e2e-start-app.sh"
       - "scripts/get-version.sh"
   pull_request:
-    branches: [main]
+    branches: [custom]
     paths:
       - ".github/workflows/e2e.yml"
       - "Makefile"
@@ -36,10 +36,6 @@ on:
       - "e2e/**"
       - "scripts/e2e-start-app.sh"
       - "scripts/get-version.sh"
-
-env:
-  GO_VERSION: "1.26"
-  NODE_VERSION: "24"
 
 jobs:
   e2e:
@@ -60,28 +56,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup mise
+        uses: jdx/mise-action@v5
         with:
-          version: 10
+          install_args: "go node pnpm kubectl"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Cache Go modules and build cache
+        uses: actions/cache@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: |
-            ui/pnpm-lock.yaml
-            e2e/pnpm-lock.yaml
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
+      - name: Cache pnpm store
+        uses: actions/cache@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          check-latest: true
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('ui/pnpm-lock.yaml', 'e2e/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install deps
-        run: make deps
+        run: mise run deps
 
       - name: Install E2E deps
         run: make e2e-install

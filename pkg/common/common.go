@@ -36,7 +36,7 @@ var (
 
 	NodeTerminalImage    = "busybox:latest"
 	KubectlTerminalImage = "zzde/kubectl:latest"
-	ClusterAgentImage    = "ghcr.io/kite-org/kite:latest"
+	ClusterAgentImage    = "liyujun/kite:latest"
 	DBType               = "sqlite"
 	DBDSN                = "dev.db"
 	PluginDir            = "data/plugins"

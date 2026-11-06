@@ -7,7 +7,7 @@
 | 参数               | 描述                                               | 默认值                  |
 | ------------------ | -------------------------------------------------- | ----------------------- |
 | `replicaCount`     | 副本数量                                           | `1`                     |
-| `image.repository` | 容器镜像仓库                                       | `ghcr.io/kite-org/kite` |
+| `image.repository` | 容器镜像仓库                                       | `liyujun/kite` |
 | `image.pullPolicy` | 镜像拉取策略                                       | `IfNotPresent`          |
 | `image.tag`        | 镜像标签。如果设置，将覆盖 chart 的 `appVersion`。 | `""`                    |
 | `imagePullSecrets` | 私有镜像仓库的拉取密钥                             | `[]`                    |

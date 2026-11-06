@@ -99,7 +99,7 @@ kubectl apply -f 'https://kite.example.com/api/v1/cluster-agent/manifest?grant=<
 kubectl apply -f kite-cluster-agent.yaml
 ```
 
-Deployment 使用的镜像由平台设置中的 **Cluster Agent Image** 配置，默认为 `ghcr.io/kite-org/kite:latest`。通过 Secret 将 Token 注入 Cluster Agent 进程。
+Deployment 使用的镜像由平台设置中的 **Cluster Agent Image** 配置，默认为 `liyujun/kite:latest`。通过 Secret 将 Token 注入 Cluster Agent 进程。
 
 ### 2. 在目标集群中启动
 

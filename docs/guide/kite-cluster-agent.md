@@ -99,7 +99,7 @@ Copy the YAML from the connection info dialog, save it to a file, and then deplo
 kubectl apply -f kite-cluster-agent.yaml
 ```
 
-The image used by the Deployment is configured via **Cluster Agent Image** in the platform settings, defaulting to `ghcr.io/kite-org/kite:latest`. The token is injected into the Cluster Agent process via a Secret.
+The image used by the Deployment is configured via **Cluster Agent Image** in the platform settings, defaulting to `liyujun/kite:latest`. The token is injected into the Cluster Agent process via a Secret.
 
 ### 2. Start It in the Target Cluster
 

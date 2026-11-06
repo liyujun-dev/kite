@@ -7,7 +7,7 @@ This document describes all available configuration options for the Kite Helm Ch
 | Parameter          | Description                                                | Default                 |
 | ------------------ | ---------------------------------------------------------- | ----------------------- |
 | `replicaCount`     | Number of replicas                                         | `1`                     |
-| `image.repository` | Container image repository                                 | `ghcr.io/kite-org/kite` |
+| `image.repository` | Container image repository                                 | `liyujun/kite` |
 | `image.pullPolicy` | Image pull policy                                          | `IfNotPresent`          |
 | `image.tag`        | Image tag. If set, will override the chart's `appVersion`. | `""`                    |
 | `imagePullSecrets` | Image pull secrets for private repositories                | `[]`                    |

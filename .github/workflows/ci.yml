@@ -11,20 +11,22 @@ concurrency:
 
 on:
   push:
-    branches: [main]
+    branches: [custom]
     paths:
       - "**/*.go"
       - "**/*.ts"
       - "**/*.tsx"
       - "**/*.css"
       - "go.mod"
+      - "mise.toml"
+      - ".github/workflows/ci.yml"
       - "ui/package.json"
       - "ui/vite.config.ts"
       - "ui/tsconfig*.json"
       - "ui/eslint.config.js"
       - "Dockerfile*"
   pull_request:
-    branches: [main]
+    branches: [custom]
     paths:
       - "**/*.go"
       - "**/*.ts"
@@ -32,15 +34,12 @@ on:
       - "**/*.css"
       - ".github/workflows/ci.yml"
       - "go.mod"
+      - "mise.toml"
       - "ui/package.json"
       - "ui/vite.config.ts"
       - "ui/tsconfig*.json"
       - "ui/eslint.config.js"
       - "Dockerfile*"
-
-env:
-  GO_VERSION: "1.26"
-  NODE_VERSION: "24"
 
 jobs:
   ci:
@@ -51,32 +50,34 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup mise
+        uses: jdx/mise-action@v5
         with:
-          version: 10
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "pnpm"
-          cache-dependency-path: ui/pnpm-lock.yaml
+          install_args: "go node pnpm golangci-lint"
 
-      - name: Setup Go
-        uses: actions/setup-go@v6
+      - name: Cache Go modules and build cache
+        uses: actions/cache@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-          check-latest: true
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/share/pnpm/store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('ui/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
 
       - name: Install deps
-        run: make deps
+        run: mise run deps
       - name: Build
-        run: make build
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v9
-        with:
-          version: v2.11.4
-      - name: lint
-        run: make pre-commit
+        run: mise run build
+      - name: Lint
+        run: mise run pre-commit
       - name: Test
-        run: make test
+        run: mise run test

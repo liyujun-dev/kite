@@ -78,7 +78,7 @@ docker run -d --name kite \
   -p 8080:8080 \
   -v "$(pwd)/data:/data" \
   -e DB_DSN=/data/db.sqlite \
-  ghcr.io/kite-org/kite:latest
+  liyujun/kite:latest
 ```
 
 ### Kubernetes Manifest

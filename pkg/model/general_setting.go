@@ -16,7 +16,7 @@ const DefaultGeneralAIModel = "gpt-4o-mini"
 const DefaultGeneralAnthropicModel = "claude-sonnet-5-5"
 const DefaultGeneralKubectlImage = "zzde/kubectl:latest"
 const DefaultGeneralNodeTerminalImage = "busybox:latest"
-const DefaultGeneralClusterAgentImage = "ghcr.io/kite-org/kite:latest"
+const DefaultGeneralClusterAgentImage = "liyujun/kite:latest"
 
 const GeneralAIProviderOpenAI = "openai"
 const GeneralAIProviderAnthropic = "anthropic"
@@ -57,7 +57,7 @@ type GeneralSetting struct {
 	KubectlEnabled          bool         `json:"kubectlEnabled" gorm:"column:kubectl_enabled;type:boolean;not null;default:true"`
 	KubectlImage            string       `json:"kubectlImage" gorm:"column:kubectl_image;type:varchar(255);not null;default:'zzde/kubectl:latest'"`
 	NodeTerminalImage       string       `json:"nodeTerminalImage" gorm:"column:node_terminal_image;type:varchar(255);not null;default:'busybox:latest'"`
-	ClusterAgentImage       string       `json:"clusterAgentImage" gorm:"column:cluster_agent_image;type:varchar(255);not null;default:'ghcr.io/kite-org/kite:latest'"`
+	ClusterAgentImage       string       `json:"clusterAgentImage" gorm:"column:cluster_agent_image;type:varchar(255);not null;default:'liyujun/kite:latest'"`
 	PluginCatalogURL        string       `json:"pluginCatalogUrl" gorm:"column:plugin_catalog_url;type:varchar(2048)"`
 	EnableAnalytics         bool         `json:"enableAnalytics" gorm:"column:enable_analytics;type:boolean;not null;default:false"`
 	AnalyticsInstallationID string       `json:"-" gorm:"type:varchar(32)"`
