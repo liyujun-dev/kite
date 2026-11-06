@@ -261,7 +261,7 @@ config:
 | `usernameClaim` | string  | 用于用户名的 JWT claim                  | 否   |
 | `groupsClaim`   | string  | 用于组的 JWT claim                      | 否   |
 | `allowedGroups` | string  | 逗号分隔的允许组列表                    | 否   |
-| `defaultRole`   | string  | 无角色映射时的默认角色                  | 否   |
+| `defaultRole`   | string  | 无角色映射时登录自动分配的角色          | 否   |
 | `enabled`       | boolean | 启用此提供者                            | 否   |
 
 ### LDAP 配置

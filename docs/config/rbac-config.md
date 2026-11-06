@@ -91,7 +91,7 @@ You can select a role and set the username to `*` to assign that role. See the e
 
 ![alt text](../screenshots/assign-role3.png)
 
-For OIDC users, you can instead set a **Default Role** on the OAuth provider (see [OAuth Setup](./oauth-setup#advanced-settings)). It applies only to users of that provider and only when they match no user or group mapping, so explicit mappings still take precedence. Unlike the `*` username mapping, it does not appear as a role assignment.
+For OIDC users, you can instead set a **Default Role** on the OAuth provider (see [OAuth Setup](./oauth-setup#advanced-settings)). It is assigned as a regular user role assignment on login when the user matches no user or group mapping, so explicit mappings still take precedence. Unlike the `*` username mapping, it is created per user and can be removed from that user's assignments. Changing the provider's default role does not update assignments that already exist.
 
 ## Best Practices
 

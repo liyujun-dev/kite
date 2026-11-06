@@ -278,7 +278,7 @@ func applyClusters(clusters []ClusterConfig) error {
 }
 
 func applyOAuth(providers []OAuthConfig) error {
-	err := model.DB.Transaction(func(tx *gorm.DB) error {
+	return model.DB.Transaction(func(tx *gorm.DB) error {
 		// Delete all existing OAuth providers, then insert from config
 		if err := tx.Where("1 = 1").Delete(&model.OAuthProvider{}).Error; err != nil {
 			return err
@@ -311,13 +311,6 @@ func applyOAuth(providers []OAuthConfig) error {
 		}
 		return nil
 	})
-	if err != nil {
-		return err
-	}
-	// RBAC loads provider default roles during its sync; refresh after the
-	// providers are committed so the fallback is available immediately.
-	rbac.TriggerSync()
-	return nil
 }
 
 func applyLDAP(cfg *LDAPConfig) error {

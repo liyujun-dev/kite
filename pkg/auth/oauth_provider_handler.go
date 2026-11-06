@@ -9,7 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/zxh326/kite/pkg/common"
 	"github.com/zxh326/kite/pkg/model"
-	"github.com/zxh326/kite/pkg/rbac"
 )
 
 // normalizeProviderDefaultRole trims the default role and verifies that it
@@ -90,7 +89,6 @@ func (h *AuthHandler) CreateOAuthProvider(c *gin.Context) {
 	}
 
 	provider.ClientSecret = "***"
-	rbac.TriggerSync()
 	c.JSON(http.StatusCreated, gin.H{
 		"provider": provider,
 	})
@@ -171,7 +169,6 @@ func (h *AuthHandler) UpdateOAuthProvider(c *gin.Context) {
 		return
 	}
 	provider.ClientSecret = "***"
-	rbac.TriggerSync()
 	c.JSON(http.StatusOK, gin.H{
 		"provider": provider,
 	})
@@ -198,7 +195,6 @@ func (h *AuthHandler) DeleteOAuthProvider(c *gin.Context) {
 		})
 		return
 	}
-	rbac.TriggerSync()
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "OAuth provider deleted successfully",

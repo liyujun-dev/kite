@@ -29,8 +29,4 @@ type RoleMapping struct {
 type RolesConfig struct {
 	Roles       []Role        `yaml:"roles"`
 	RoleMapping []RoleMapping `yaml:"roleMapping"`
-
-	// DefaultRoles maps an OAuth provider name to the role used when a user
-	// matches no explicit role mapping. Built from the database at sync time.
-	DefaultRoles map[string]string `yaml:"-"`
 }

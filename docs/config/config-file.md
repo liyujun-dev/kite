@@ -261,7 +261,7 @@ The super user is created on first startup if it doesn't exist. On subsequent st
 | `usernameClaim` | string  | JWT claim for username                      | No       |
 | `groupsClaim`   | string  | JWT claim for groups                        | No       |
 | `allowedGroups` | string  | Comma-separated list of allowed groups      | No       |
-| `defaultRole`   | string  | Fallback role for users with no role mapping | No      |
+| `defaultRole`   | string  | Role assigned on login when no role mapping matches | No |
 | `enabled`       | boolean | Enable this provider                        | No       |
 
 ### LDAP Configuration

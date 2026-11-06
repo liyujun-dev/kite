@@ -117,16 +117,6 @@ func GetUserRoles(user model.User) []common.Role {
 			}
 		}
 	}
-	// Fall back to the provider's default role only when no explicit mapping
-	// matched. Provider names are matched exactly; password/LDAP/API key and
-	// anonymous users never have provider names that collide with OAuth providers.
-	if len(rolesMap) == 0 {
-		if name := RBACConfig.DefaultRoles[user.Provider]; name != "" {
-			if r := findRoleLocked(name); r != nil {
-				rolesMap[r.Name] = *r
-			}
-		}
-	}
 	roles := make([]common.Role, 0, len(rolesMap))
 	for _, role := range rolesMap {
 		roles = append(roles, role)

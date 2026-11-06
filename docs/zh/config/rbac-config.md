@@ -91,7 +91,7 @@ verbs: *
 
 ![alt text](../../screenshots/assign-role3.png)
 
-对于 OIDC 用户，也可以直接在该 OAuth Provider 上配置**默认角色**（见 [OAuth 设置](./oauth-setup#高级设置)）。它只对该 Provider 的用户生效，并且仅当用户没有匹配任何用户或组映射时才使用，显式映射仍然优先。与 `users: ["*"]` 不同，它不会显示为一条角色分配记录。
+对于 OIDC 用户，也可以直接在该 OAuth Provider 上配置**默认角色**（见 [OAuth 设置](./oauth-setup#高级设置)）。当用户没有匹配任何用户或组映射时，登录会为其创建一条普通的用户角色分配，显式映射仍然优先。与 `users: ["*"]` 不同，它是按用户创建的，可以从该用户的分配中移除；修改 Provider 的默认角色不会更新已有分配。
 
 ## 最佳实践
 

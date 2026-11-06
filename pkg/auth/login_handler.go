@@ -352,8 +352,11 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 	}
 	klog.V(1).Infof("OAuth Callback - User details: Username=%s, Name=%s, Sub=%s, Email=%s, OIDCGroups=%v",
 		user.Username, user.Name, user.Sub, user.Username, user.OIDCGroups)
-	role := rbac.GetUserRoles(*user)
-	if len(role) == 0 {
+	roles := rbac.GetUserRoles(*user)
+	if len(roles) == 0 && user.Enabled {
+		roles = applyProviderDefaultRole(provider, user)
+	}
+	if len(roles) == 0 {
 		klog.Warningf("OAuth Callback - Access denied for user: %s (provider: %s), Username: %s, Name: %s, Sub: %s, OIDCGroups: %v",
 			user.Key(), provider, user.Username, user.Name, user.Sub, user.OIDCGroups)
 		c.Redirect(http.StatusFound, base+"/login?error=insufficient_permissions&reason=insufficient_permissions&user="+user.Key()+"&provider="+provider)
@@ -377,6 +380,45 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 		return
 	}
 	c.Redirect(http.StatusFound, base+"/")
+}
+
+// applyProviderDefaultRole assigns the provider's default role to a user who
+// matches no explicit role mapping. The assignment is persisted like any other
+// RBAC user assignment and is kept after login.
+func applyProviderDefaultRole(providerName string, user *model.User) []common.Role {
+	dbProvider, err := model.GetOAuthProviderByName(providerName)
+	if err != nil || dbProvider.DefaultRole == "" {
+		return nil
+	}
+
+	role, err := model.GetRoleByName(dbProvider.DefaultRole)
+	if err != nil {
+		klog.Warningf("OAuth Callback - Default role %q for provider %s does not exist", dbProvider.DefaultRole, providerName)
+		return nil
+	}
+
+	var existing model.RoleAssignment
+	err = model.DB.Where("role_id = ? AND subject_type = ? AND subject = ?", role.ID, model.SubjectTypeUser, user.Key()).First(&existing).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		if err := model.DB.Create(&model.RoleAssignment{
+			RoleID:      role.ID,
+			SubjectType: model.SubjectTypeUser,
+			Subject:     user.Key(),
+		}).Error; err != nil {
+			klog.Warningf("OAuth Callback - Failed to assign default role %q to user %s: %v", role.Name, user.Key(), err)
+			return nil
+		}
+		klog.Infof("OAuth Callback - Assigned default role %q to user %s (provider: %s)", role.Name, user.Key(), providerName)
+	} else if err != nil {
+		klog.Warningf("OAuth Callback - Failed to check role assignment for user %s: %v", user.Key(), err)
+		return nil
+	}
+
+	if err := rbac.ReloadRolesNow(); err != nil {
+		klog.Errorf("OAuth Callback - Failed to reload RBAC after assigning default role: %v", err)
+		return nil
+	}
+	return rbac.GetUserRoles(*user)
 }
 
 func (h *AuthHandler) Logout(c *gin.Context) {

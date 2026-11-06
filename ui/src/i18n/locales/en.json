@@ -1027,7 +1027,7 @@
       "issuer": "Issuer",
       "enabled": "Enabled",
       "noDefaultRole": "No default role",
-      "defaultRoleHint": "Used only when the user matches no user or group role mapping."
+      "defaultRoleHint": "Assigned to the user on first login when no user or group role mapping matches. Existing assignments are not changed."
     }
   },
   "initialization": {
