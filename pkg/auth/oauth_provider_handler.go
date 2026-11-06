@@ -4,11 +4,24 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/zxh326/kite/pkg/common"
 	"github.com/zxh326/kite/pkg/model"
+	"github.com/zxh326/kite/pkg/rbac"
 )
+
+// normalizeProviderDefaultRole trims the default role and verifies that it
+// names an existing role. An empty default role disables the fallback.
+func normalizeProviderDefaultRole(provider *model.OAuthProvider) error {
+	provider.DefaultRole = strings.TrimSpace(provider.DefaultRole)
+	if provider.DefaultRole == "" {
+		return nil
+	}
+	_, err := model.GetRoleByName(provider.DefaultRole)
+	return err
+}
 
 func (h *AuthHandler) ListOAuthProviders(c *gin.Context) {
 	providers, err := model.GetAllOAuthProviders()
@@ -56,6 +69,12 @@ func (h *AuthHandler) CreateOAuthProvider(c *gin.Context) {
 		})
 		return
 	}
+	if err := normalizeProviderDefaultRole(&provider); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Default role not found: " + provider.DefaultRole,
+		})
+		return
+	}
 
 	if err := model.CreateOAuthProvider(&provider); err != nil {
 		if errors.Is(err, model.ErrReservedOAuthProviderName) {
@@ -71,6 +90,7 @@ func (h *AuthHandler) CreateOAuthProvider(c *gin.Context) {
 	}
 
 	provider.ClientSecret = "***"
+	rbac.TriggerSync()
 	c.JSON(http.StatusCreated, gin.H{
 		"provider": provider,
 	})
@@ -113,6 +133,12 @@ func (h *AuthHandler) UpdateOAuthProvider(c *gin.Context) {
 		})
 		return
 	}
+	if err := normalizeProviderDefaultRole(&provider); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Default role not found: " + provider.DefaultRole,
+		})
+		return
+	}
 
 	updates := map[string]interface{}{
 		"name":           provider.Name,
@@ -125,6 +151,7 @@ func (h *AuthHandler) UpdateOAuthProvider(c *gin.Context) {
 		"username_claim": provider.UsernameClaim,
 		"groups_claim":   provider.GroupsClaim,
 		"allowed_groups": provider.AllowedGroups,
+		"default_role":   provider.DefaultRole,
 		"enabled":        provider.Enabled,
 	}
 	if provider.ClientSecret != "" {
@@ -144,6 +171,7 @@ func (h *AuthHandler) UpdateOAuthProvider(c *gin.Context) {
 		return
 	}
 	provider.ClientSecret = "***"
+	rbac.TriggerSync()
 	c.JSON(http.StatusOK, gin.H{
 		"provider": provider,
 	})
@@ -170,6 +198,7 @@ func (h *AuthHandler) DeleteOAuthProvider(c *gin.Context) {
 		})
 		return
 	}
+	rbac.TriggerSync()
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "OAuth provider deleted successfully",

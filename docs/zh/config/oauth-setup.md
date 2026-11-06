@@ -20,11 +20,20 @@
 遵循页面中的指示填写基本信息即使用 OAuth 登录。
 ![OAuth](../../screenshots/oauth.png)
 
+## 高级设置
+
+在添加或编辑 OAuth Provider 时，可以在**高级设置**中配置以下选项：
+
+- **Username Claim**：覆盖用于提取用户名的 claim（如 `preferred_username`、`upn` 或 `nickname`）。
+- **Groups Claim**：覆盖用于提取用户组的 claim（如 `groups`、`memberOf` 或 `roles`）。
+- **Allowed Groups**：限制只有属于指定用户组的用户可以登录，多个组用逗号分隔。
+- **Default Role**：该 Provider 的默认角色。仅在用户没有匹配任何用户或组角色映射时生效，显式映射优先；角色必须已存在。留空表示没有匹配映射时拒绝访问。
+
 ## 常见问题
 
 ### 用户登录后显示没有权限使用
 
-默认情况下，即使登录成功，Kite 也不会授予用户任何权限。您需要手动配置 RBAC 规则来授予访问权限。
+默认情况下，即使登录成功，Kite 也不会授予用户任何权限。您需要手动配置 RBAC 规则来授予访问权限，或者在 OAuth Provider 的高级设置中配置**默认角色**：当用户没有匹配任何用户或组角色映射时，会自动使用该角色。
 
 查看 [RBAC 配置指南](./rbac-config) 获取详情。
 

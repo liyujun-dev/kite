@@ -40,6 +40,7 @@ type OAuthProvider struct {
 	UsernameClaim string          `json:"usernameClaim" gorm:"type:varchar(255)"`
 	GroupsClaim   string          `json:"groupsClaim" gorm:"type:varchar(255)"`
 	AllowedGroups string          `json:"allowedGroups" gorm:"type:text"`
+	DefaultRole   string          `json:"defaultRole" gorm:"type:varchar(100)"`
 
 	// Auto-generated redirect URL
 	RedirectURL string `json:"-" gorm:"-"`

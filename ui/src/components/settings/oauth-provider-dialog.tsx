@@ -3,7 +3,7 @@ import { IconEdit, IconKey } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
 
 import { OAuthProvider } from '@/types/api'
-import { OAuthProviderCreateRequest } from '@/lib/api'
+import { OAuthProviderCreateRequest, useRoleList } from '@/lib/api'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +15,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 
@@ -38,6 +45,7 @@ function createOAuthProviderFormData(provider?: OAuthProvider | null) {
     usernameClaim: provider?.usernameClaim || '',
     groupsClaim: provider?.groupsClaim || '',
     allowedGroups: provider?.allowedGroups || '',
+    defaultRole: provider?.defaultRole || '',
     enabled: provider?.enabled ?? true,
   }
 }
@@ -69,6 +77,7 @@ function OAuthProviderDialogContent({
 }: Omit<OAuthProviderDialogProps, 'open'>) {
   const { t } = useTranslation()
   const isEditMode = !!provider
+  const { data: roles = [] } = useRoleList()
 
   const [formData, setFormData] = useState(() =>
     createOAuthProviderFormData(provider)
@@ -121,6 +130,7 @@ function OAuthProviderDialogContent({
     if (formData.groupsClaim) submitData.groupsClaim = formData.groupsClaim
     if (formData.allowedGroups)
       submitData.allowedGroups = formData.allowedGroups
+    submitData.defaultRole = formData.defaultRole
 
     onSubmit(submitData)
   }
@@ -360,6 +370,48 @@ function OAuthProviderDialogContent({
                   'e.g., admin, developers (comma separated)'
                 )}
               />
+            </div>
+            <div className="space-y-2 sm:col-span-2">
+              <Label htmlFor="defaultRole">
+                {t('common.fields.defaultRole', 'Default Role')}
+              </Label>
+              <Select
+                value={formData.defaultRole || '__none__'}
+                onValueChange={(value) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    defaultRole: value === '__none__' ? '' : value,
+                  }))
+                }
+              >
+                <SelectTrigger id="defaultRole">
+                  <SelectValue
+                    placeholder={t(
+                      'common.placeholders.defaultRole',
+                      'e.g., viewer'
+                    )}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">
+                    {t(
+                      'oauthManagement.dialog.noDefaultRole',
+                      'No default role'
+                    )}
+                  </SelectItem>
+                  {roles.map((role) => (
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {t(
+                  'oauthManagement.dialog.defaultRoleHint',
+                  'Used only when the user matches no user or group role mapping.'
+                )}
+              </p>
             </div>
           </div>
         </div>

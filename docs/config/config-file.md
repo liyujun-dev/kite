@@ -55,6 +55,7 @@ oauth:
     scopes: "openid,profile,email"
     usernameClaim: "email"
     groupsClaim: "groups"
+    defaultRole: "viewer"
     enabled: true
 
 ldap:
@@ -260,6 +261,7 @@ The super user is created on first startup if it doesn't exist. On subsequent st
 | `usernameClaim` | string  | JWT claim for username                      | No       |
 | `groupsClaim`   | string  | JWT claim for groups                        | No       |
 | `allowedGroups` | string  | Comma-separated list of allowed groups      | No       |
+| `defaultRole`   | string  | Fallback role for users with no role mapping | No      |
 | `enabled`       | boolean | Enable this provider                        | No       |
 
 ### LDAP Configuration

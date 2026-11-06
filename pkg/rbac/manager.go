@@ -60,6 +60,29 @@ func loadRolesFromDB() error {
 			cfg.RoleMapping = append(cfg.RoleMapping, rm)
 		}
 	}
+	roleNames := make(map[string]struct{}, len(cfg.Roles))
+	for _, r := range cfg.Roles {
+		roleNames[r.Name] = struct{}{}
+	}
+
+	// Load per-provider fallback roles. Select only the fields we need so the
+	// encrypted client secret is never scanned/decrypted here.
+	var providers []model.OAuthProvider
+	if err := model.DB.Select("name", "default_role").
+		Where("enabled = ? AND default_role <> ''", true).
+		Find(&providers).Error; err != nil {
+		return err
+	}
+	cfg.DefaultRoles = make(map[string]string, len(providers))
+	for _, p := range providers {
+		name := string(p.Name)
+		if _, ok := roleNames[p.DefaultRole]; !ok {
+			klog.Warningf("OAuth provider %q has default role %q which does not exist; skipping", name, p.DefaultRole)
+			continue
+		}
+		cfg.DefaultRoles[name] = p.DefaultRole
+	}
+
 	rwlock.Lock()
 	RBACConfig = cfg
 	rwlock.Unlock()

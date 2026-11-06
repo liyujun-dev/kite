@@ -54,6 +54,7 @@ type OAuthConfig struct {
 	UsernameClaim string `yaml:"usernameClaim"`
 	GroupsClaim   string `yaml:"groupsClaim"`
 	AllowedGroups string `yaml:"allowedGroups"`
+	DefaultRole   string `yaml:"defaultRole"`
 }
 
 type LDAPConfig struct {
@@ -277,7 +278,7 @@ func applyClusters(clusters []ClusterConfig) error {
 }
 
 func applyOAuth(providers []OAuthConfig) error {
-	return model.DB.Transaction(func(tx *gorm.DB) error {
+	err := model.DB.Transaction(func(tx *gorm.DB) error {
 		// Delete all existing OAuth providers, then insert from config
 		if err := tx.Where("1 = 1").Delete(&model.OAuthProvider{}).Error; err != nil {
 			return err
@@ -302,6 +303,7 @@ func applyOAuth(providers []OAuthConfig) error {
 				UsernameClaim: p.UsernameClaim,
 				GroupsClaim:   p.GroupsClaim,
 				AllowedGroups: p.AllowedGroups,
+				DefaultRole:   strings.TrimSpace(p.DefaultRole),
 			}
 			if err := tx.Create(provider).Error; err != nil {
 				return err
@@ -309,6 +311,13 @@ func applyOAuth(providers []OAuthConfig) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+	// RBAC loads provider default roles during its sync; refresh after the
+	// providers are committed so the fallback is available immediately.
+	rbac.TriggerSync()
+	return nil
 }
 
 func applyLDAP(cfg *LDAPConfig) error {

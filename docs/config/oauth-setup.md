@@ -27,12 +27,13 @@ Kite supports overriding default OIDC claims and restricting access based on use
 - **Username Claim**: Overrides the default claim used to extract the user's username (e.g., `preferred_username`, `upn`, or `nickname`). If left empty, Kite uses standard claims like `email` or `name`.
 - **Groups Claim**: Overrides the default claim used to extract the user's groups (e.g., `groups`, `memberOf`, or `roles`). If left empty, Kite defaults to standard group representations.
 - **Allowed Groups**: Restricts login to users who belong to specific groups. Enter a comma-separated list of group names (e.g., `admin, developers`). If configured, users must belong to at least one of these groups to log in. Users without a matching group are denied access.
+- **Default Role**: Optional fallback role for this provider. It applies only when a user matches no user or group role mapping; explicit mappings take precedence. The role must already exist. Leave empty to deny access when no mapping matches.
 
 ## Common Issues
 
 ### User shows no permissions after login
 
-By default, even after successful login, Kite will not grant any permissions to the user. You need to manually configure RBAC rules to grant access.
+By default, even after successful login, Kite will not grant any permissions to the user. You need to manually configure RBAC rules to grant access, or set a **Default Role** on the provider to grant a fallback role to users who match no mapping.
 
 See the [RBAC Configuration Guide](./rbac-config) for details.
 

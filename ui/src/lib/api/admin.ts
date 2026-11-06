@@ -96,6 +96,7 @@ export interface OAuthProviderCreateRequest {
   usernameClaim?: string
   groupsClaim?: string
   allowedGroups?: string
+  defaultRole?: string
   enabled?: boolean
 }
 

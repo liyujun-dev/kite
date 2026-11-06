@@ -70,6 +70,7 @@
       "avatar": "Avatar",
       "avatarUrl": "Avatar URL",
       "allowedGroups": "Allowed Groups",
+      "defaultRole": "Default Role",
       "basicInformation": "Basic Information",
       "binaryData": "Binary Data",
       "bytes": "bytes",
@@ -315,6 +316,7 @@
     },
     "placeholders": {
       "allowedGroups": "e.g., admin, developers (comma separated)",
+      "defaultRole": "e.g., viewer",
       "apiKeyName": "e.g., CI API Key",
       "authUrl": "https://provider.com/oauth/authorize",
       "groupsClaim": "e.g., memberOf",
@@ -1023,7 +1025,9 @@
       "userInfoUrl": "User Info URL",
       "scopes": "Scopes",
       "issuer": "Issuer",
-      "enabled": "Enabled"
+      "enabled": "Enabled",
+      "noDefaultRole": "No default role",
+      "defaultRoleHint": "Used only when the user matches no user or group role mapping."
     }
   },
   "initialization": {

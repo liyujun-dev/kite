@@ -31,7 +31,7 @@ func TestLoadRolesFromDB(t *testing.T) {
 		_ = sqlDB.Close()
 	})
 
-	if err := db.AutoMigrate(&model.Role{}, &model.RoleAssignment{}); err != nil {
+	if err := db.AutoMigrate(&model.Role{}, &model.RoleAssignment{}, &model.OAuthProvider{}); err != nil {
 		t.Fatalf("migrate database: %v", err)
 	}
 	role := model.Role{

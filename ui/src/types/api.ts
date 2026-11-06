@@ -645,6 +645,7 @@ export interface OAuthProvider {
   usernameClaim?: string
   groupsClaim?: string
   allowedGroups?: string
+  defaultRole?: string
   enabled: boolean
   createdAt: string
   updatedAt: string

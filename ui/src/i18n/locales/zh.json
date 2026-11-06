@@ -66,6 +66,7 @@
       "assignments": "当前分配",
       "auditLogs": "审计日志",
       "allowedGroups": "允许的用户组",
+      "defaultRole": "默认角色",
       "available": "可用",
       "availableReplicas": "可用副本",
       "avatar": "头像",
@@ -315,6 +316,7 @@
     },
     "placeholders": {
       "allowedGroups": "例如：admin, developers（逗号分隔）",
+      "defaultRole": "例如：viewer",
       "apiKeyName": "例如：CI API 密钥",
       "authUrl": "https://provider.com/oauth/authorize",
       "groupsClaim": "例如：memberOf",
@@ -1038,7 +1040,9 @@
       "userInfoUrl": "User Info URL",
       "scopes": "Scopes",
       "issuer": "Issuer",
-      "enabled": "启用"
+      "enabled": "启用",
+      "noDefaultRole": "不使用默认角色",
+      "defaultRoleHint": "仅当用户未匹配任何用户或组角色映射时生效。"
     }
   },
   "userManagement": {

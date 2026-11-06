@@ -62,6 +62,12 @@ export function OAuthProviderManagement() {
                 Scopes: {provider.scopes}
               </div>
             )}
+            {provider.defaultRole && (
+              <div className="text-sm text-muted-foreground">
+                {t('common.fields.defaultRole', 'Default Role')}:{' '}
+                {provider.defaultRole}
+              </div>
+            )}
           </div>
         ),
       },

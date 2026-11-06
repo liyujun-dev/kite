@@ -196,6 +196,7 @@ config:
   #     clientSecret: "secret-value"
   #     issuer: "https://accounts.google.com"
   #     scopes: "openid,profile,email"
+  #     defaultRole: viewer
   #     enabled: true
   #
   # LDAP configuration
