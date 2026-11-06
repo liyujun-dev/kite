@@ -67,6 +67,10 @@ spec:
             - name: ANONYMOUS_USER_ENABLED
               value: "true"
             {{- end }}
+            {{- if not .Values.mcpEnabled }}
+            - name: MCP_ENABLED
+              value: "false"
+            {{- end }}
             {{- if eq .Values.db.type "sqlite" }}
             - name: DB_TYPE
               value: sqlite

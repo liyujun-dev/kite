@@ -2,7 +2,6 @@ package auth
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -12,33 +11,8 @@ import (
 )
 
 func (h *AuthHandler) RequireAPIKeyAuth(c *gin.Context, token string) {
-	keyPart := strings.SplitN(token, "-", 2)
-	if len(keyPart) < 2 {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Invalid API key",
-		})
-		c.Abort()
-		return
-	}
-	id := keyPart[0]
-	key := keyPart[1]
-	dbID, err := strconv.ParseUint(id, 10, 64)
+	apikey, err := ValidateAPIKeyToken(token)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Invalid API key",
-		})
-		c.Abort()
-		return
-	}
-	apikey, err := model.GetUserByIDCached(dbID)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Invalid API key",
-		})
-		c.Abort()
-		return
-	}
-	if !apikey.Enabled || apikey.Provider != common.APIKeyProvider || key == "" || string(apikey.APIKey) == "" || key != string(apikey.APIKey) {
 		c.JSON(http.StatusUnauthorized, gin.H{
 			"error": "Invalid API key",
 		})
@@ -46,7 +20,6 @@ func (h *AuthHandler) RequireAPIKeyAuth(c *gin.Context, token string) {
 		return
 	}
 	_ = model.LoginUser(apikey)
-	apikey.Roles = rbac.GetUserRoles(*apikey)
 	c.Set("user", *apikey)
 }
 

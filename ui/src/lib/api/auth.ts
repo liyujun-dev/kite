@@ -25,10 +25,15 @@ export interface OAuthLoginResponse {
 }
 
 export const initiateOAuthLogin = async (
-  provider: string
+  provider: string,
+  redirect?: string
 ): Promise<OAuthLoginResponse> => {
+  const params = new URLSearchParams({ provider })
+  if (redirect) {
+    params.set('redirect', redirect)
+  }
   return authApiClient.get<OAuthLoginResponse>(
-    `/auth/login?provider=${encodeURIComponent(provider)}`,
+    `/auth/login?${params.toString()}`,
     {
       retryOnUnauthorized: false,
     }

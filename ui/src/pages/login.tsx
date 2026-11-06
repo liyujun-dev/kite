@@ -27,6 +27,22 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Footer } from '@/components/footer'
 import { LanguageToggle } from '@/components/language-toggle'
 
+function safeOAuthRedirect(raw: string | null): string | null {
+  if (!raw) return null
+  if (!raw.startsWith('/') || raw.startsWith('//')) return null
+  if (raw.includes('\\') || raw.includes('\r') || raw.includes('\n')) return null
+  const authorizePath = withSubPath('/api/oauth/authorize')
+  if (!raw.startsWith(authorizePath)) return null
+  try {
+    const url = new URL(raw, window.location.origin)
+    if (url.origin !== window.location.origin) return null
+    if (!url.pathname.startsWith(authorizePath)) return null
+  } catch {
+    return null
+  }
+  return raw
+}
+
 export function LoginPage() {
   const { t } = useTranslation()
   const {
@@ -53,6 +69,7 @@ export function LoginPage() {
 
   const error = searchParams.get('error')
   const redirectHref = searchParams.get('href') || ''
+  const oauthRedirect = safeOAuthRedirect(searchParams.get('redirect'))
   const passkeySupported =
     passkeyLoginEnabled &&
     typeof window !== 'undefined' &&
@@ -79,7 +96,16 @@ export function LoginPage() {
     }
   }, [credentialProviders, credentialsProvider])
 
+  useEffect(() => {
+    if (user && !isLoading && oauthRedirect) {
+      window.location.assign(oauthRedirect)
+    }
+  }, [user, isLoading, oauthRedirect])
+
   if (user && !isLoading) {
+    if (oauthRedirect) {
+      return null
+    }
     const storedHref = sessionStorage.getItem('loginRedirectHref')
     if (storedHref) {
       sessionStorage.removeItem('loginRedirectHref')
@@ -94,7 +120,7 @@ export function LoginPage() {
       sessionStorage.setItem('loginRedirectHref', redirectHref)
     }
     try {
-      await login(provider)
+      await login(provider, oauthRedirect ?? undefined)
     } catch (error) {
       console.error('Login error:', error)
       sessionStorage.removeItem('loginRedirectHref')

@@ -11,8 +11,10 @@ import (
 	"github.com/zxh326/kite/pkg/audit"
 	"github.com/zxh326/kite/pkg/auth"
 	"github.com/zxh326/kite/pkg/cluster"
+	"github.com/zxh326/kite/pkg/common"
 	"github.com/zxh326/kite/pkg/helm"
 	"github.com/zxh326/kite/pkg/images"
+	kitemcp "github.com/zxh326/kite/pkg/mcp"
 	"github.com/zxh326/kite/pkg/metrics"
 	"github.com/zxh326/kite/pkg/middleware"
 	"github.com/zxh326/kite/pkg/plugins"
@@ -41,6 +43,9 @@ func setupAPIRouter(r *gin.RouterGroup, cm *cluster.ClusterManager) {
 	r.POST("/api/v1/cluster-agent/register", cm.RegisterClusterAgent)
 	r.GET("/api/v1/cluster-agent/manifest", cm.GetClusterAgentManifest)
 	registerAuthRoutes(r, authHandler)
+	if common.MCPEnabled {
+		kitemcp.NewHandler(cm).RegisterRoutes(r)
+	}
 	registerUserRoutes(r, authHandler)
 	registerAdminRoutes(r, authHandler, cm, helmChartsHandler)
 	registerProtectedRoutes(r, authHandler, cm, helmChartsHandler)

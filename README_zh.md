@@ -43,6 +43,7 @@ Kite 是一个轻量、开源的 Kubernetes 工作空间，面向多集群运维
 
 - 使用内置 AI 助手检查资源、日志和 Prometheus 指标。
 - 写操作执行前需要用户确认，且 AI 助手遵循当前用户的 RBAC 权限。
+- 支持 Claude Code、Cursor 等 MCP 客户端通过 OAuth 保护的 `/mcp` 端点接入，工具权限跟随用户的 RBAC 角色。
 
 ## 快速开始
 

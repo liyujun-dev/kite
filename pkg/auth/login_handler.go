@@ -39,6 +39,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 	setCookieSecure(c, "oauth_state", state, 600)
 	setCookieSecure(c, "oauth_provider", provider, 600)
+	// Preserve a local redirect (for example an MCP OAuth authorize URL) across
+	// the external OAuth round trip.
+	setCookieSecure(c, "oauth_redirect", "", -1)
+	if redirect := safeRedirect(c.Query("redirect")); redirect != "" {
+		setCookieSecure(c, "oauth_redirect", redirect, 600)
+	}
 
 	authURL := oauthProvider.GetAuthURL(state)
 	c.JSON(http.StatusOK, gin.H{
@@ -298,6 +304,9 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 
 	setCookieSecure(c, "oauth_state", "", -1)
 	setCookieSecure(c, "oauth_provider", "", -1)
+	redirect, _ := c.Cookie("oauth_redirect")
+	redirect = safeRedirect(redirect)
+	setCookieSecure(c, "oauth_redirect", "", -1)
 
 	if code == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -363,6 +372,10 @@ func (h *AuthHandler) Callback(c *gin.Context) {
 
 	setCookieSecure(c, "auth_token", jwtToken, common.CookieExpirationSeconds)
 
+	if redirect != "" {
+		c.Redirect(http.StatusFound, redirect)
+		return
+	}
 	c.Redirect(http.StatusFound, base+"/")
 }
 

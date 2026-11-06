@@ -39,9 +39,14 @@ func clusterAgentServerURL(c *gin.Context) string {
 }
 
 func (cm *ClusterManager) GetClusters(c *gin.Context) {
+	user := c.MustGet("user").(model.User)
+	c.JSON(http.StatusOK, cm.GetAccessibleClusters(user))
+}
+
+// GetAccessibleClusters returns the clusters the user is allowed to access.
+func (cm *ClusterManager) GetAccessibleClusters(user model.User) []common.ClusterInfo {
 	clusters, errors, defaultContext := cm.snapshotState()
 	result := make([]common.ClusterInfo, 0, len(clusters))
-	user := c.MustGet("user").(model.User)
 	for name, cluster := range clusters {
 		if !rbac.CanAccessCluster(user, name) {
 			continue
@@ -66,7 +71,7 @@ func (cm *ClusterManager) GetClusters(c *gin.Context) {
 	sort.Slice(result, func(i, j int) bool {
 		return result[i].Name < result[j].Name
 	})
-	c.JSON(http.StatusOK, result)
+	return result
 }
 
 func (cm *ClusterManager) GetClusterList(c *gin.Context) {

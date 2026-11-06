@@ -27,3 +27,9 @@ Kite supports several environment variables by default to change the default val
 - **ENABLE_ANALYTICS**: Enable data analytics functionality, default value is `false`. When enabled, Kite will collect limited data to help improve the product.
 
 - **PORT**: Port on which Kite runs, default value is `8080`.
+
+- **MCP_ENABLED**: Enable the MCP endpoint (`/mcp`) and its OAuth 2.1 endpoints, default value is `true`. Set to `false` to disable them.
+
+- **MCP_ISSUER**: Override the OAuth issuer URL advertised to MCP clients, for example `https://kite.example.com`. Defaults to `HOST` (or request headers) plus the base path.
+
+- **MCP_RESOURCE**: Override the MCP resource URL advertised to clients. Defaults to `<issuer>/mcp`.

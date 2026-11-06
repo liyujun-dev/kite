@@ -43,6 +43,7 @@ Kite is a lightweight, open-source Kubernetes workspace for multi-cluster operat
 
 - Inspect resources, logs, and Prometheus metrics with the built-in AI assistant.
 - Review and confirm write operations before execution; the assistant respects the current user's RBAC permissions.
+- Connect Claude Code, Cursor, or other MCP clients through the OAuth-protected `/mcp` endpoint; MCP tools follow the user's RBAC permissions.
 
 ## Quick Start
 

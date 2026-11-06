@@ -27,3 +27,9 @@ Kite 默认支持一些环境变量，来改变一些配置项的默认值。
 - **ENABLE_ANALYTICS**：启用数据分析功能，默认值为 `false`。当启用后，Kite 将收集有限数据以帮助改进产品。
 
 - **PORT**：Kite 运行的端口，默认值为 `8080`。
+
+- **MCP_ENABLED**：启用 MCP 端点（`/mcp`）及其 OAuth 2.1 端点，默认值为 `true`。设置为 `false` 可禁用。
+
+- **MCP_ISSUER**：覆盖向 MCP 客户端公布的 OAuth issuer URL，例如 `https://kite.example.com`。默认使用 `HOST`（或请求头）加基础路径。
+
+- **MCP_RESOURCE**：覆盖向客户端公布的 MCP 资源 URL，默认为 `<issuer>/mcp`。

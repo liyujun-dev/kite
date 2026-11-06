@@ -22,8 +22,8 @@ func TestGetRequestHost(t *testing.T) {
 		c, _ := gin.CreateTestContext(httptest.NewRecorder())
 		c.Request = httptest.NewRequest(http.MethodGet, "http://ignored.local", nil)
 
-		if got := getRequestHost(c); got != common.Host {
-			t.Fatalf("getRequestHost() = %q, want %q", got, common.Host)
+		if got := GetRequestHost(c); got != common.Host {
+			t.Fatalf("GetRequestHost() = %q, want %q", got, common.Host)
 		}
 	})
 
@@ -35,8 +35,8 @@ func TestGetRequestHost(t *testing.T) {
 		req.Header.Set("X-Forwarded-Host", "kite.example.com")
 		c.Request = req
 
-		if got := getRequestHost(c); got != "https://kite.example.com" {
-			t.Fatalf("getRequestHost() = %q, want %q", got, "https://kite.example.com")
+		if got := GetRequestHost(c); got != "https://kite.example.com" {
+			t.Fatalf("GetRequestHost() = %q, want %q", got, "https://kite.example.com")
 		}
 	})
 
@@ -46,8 +46,8 @@ func TestGetRequestHost(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "http://kite.local", nil)
 		c.Request = req
 
-		if got := getRequestHost(c); got != "http://kite.local" {
-			t.Fatalf("getRequestHost() = %q, want %q", got, "http://kite.local")
+		if got := GetRequestHost(c); got != "http://kite.local" {
+			t.Fatalf("GetRequestHost() = %q, want %q", got, "http://kite.local")
 		}
 	})
 
@@ -57,8 +57,8 @@ func TestGetRequestHost(t *testing.T) {
 		c.Request = httptest.NewRequest(http.MethodGet, "http://kite.local", nil)
 		c.Request.Host = ""
 
-		if got := getRequestHost(c); got != "http://localhost" {
-			t.Fatalf("getRequestHost() = %q, want %q", got, "http://localhost")
+		if got := GetRequestHost(c); got != "http://localhost" {
+			t.Fatalf("GetRequestHost() = %q, want %q", got, "http://localhost")
 		}
 	})
 }

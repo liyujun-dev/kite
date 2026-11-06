@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,21 +29,26 @@ func NewOAuthManager() *OAuthManager {
 	}
 }
 
-func getRequestHost(c *gin.Context) string {
+func GetRequestHost(c *gin.Context) string {
+	return GetRequestHostFromRequest(c.Request)
+}
+
+// GetRequestHostFromRequest returns the externally visible origin (scheme and host) of a request.
+func GetRequestHostFromRequest(r *http.Request) string {
 	if common.Host != "" {
-		return common.Host
+		return strings.TrimRight(common.Host, "/")
 	}
-	proto := c.Request.Header.Get("X-Forwarded-Proto")
-	host := c.Request.Header.Get("X-Forwarded-Host")
+	proto := r.Header.Get("X-Forwarded-Proto")
+	host := r.Header.Get("X-Forwarded-Host")
 	if proto != "" && host != "" {
 		return proto + "://" + host
 	}
-	if c.Request.Host != "" {
+	if r.Host != "" {
 		scheme := "https"
-		if c.Request.TLS == nil {
+		if r.TLS == nil {
 			scheme = "http"
 		}
-		return scheme + "://" + c.Request.Host
+		return scheme + "://" + r.Host
 	}
 
 	return "http://localhost"
@@ -52,7 +59,7 @@ func (om *OAuthManager) GetProvider(c *gin.Context, name string) (OAuthProvider,
 	if err != nil {
 		return nil, err
 	}
-	dbProvider.RedirectURL, _ = url.JoinPath(getRequestHost(c), common.Base+"/api/auth/callback")
+	dbProvider.RedirectURL, _ = url.JoinPath(GetRequestHost(c), common.Base+"/api/auth/callback")
 	return NewGenericProvider(dbProvider)
 }
 

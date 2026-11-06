@@ -47,6 +47,9 @@ var (
 	AllNamespaces = "_all"
 
 	AnonymousUserEnabled = false
+	MCPEnabled           = true
+	MCPIssuer            = ""
+	MCPResource          = ""
 
 	CookieExpirationSeconds = 2 * JWTExpirationSeconds // double jwt
 
@@ -156,6 +159,7 @@ func LoadEnvs() {
 		AnonymousUserEnabled = true
 		klog.Warningf("Anonymous user is enabled, this is not secure for production!")
 	}
+	loadMCPEnvs()
 	if v := os.Getenv("HOST"); v != "" {
 		Host = v
 	}
@@ -203,4 +207,16 @@ func LoadEnvs() {
 		}
 	}
 	klog.Infof("Trusted proxies configured: %v", TrustedProxies)
+}
+
+func loadMCPEnvs() {
+	if v := os.Getenv("MCP_ENABLED"); strings.EqualFold(v, "false") {
+		MCPEnabled = false
+	}
+	if v := os.Getenv("MCP_ISSUER"); v != "" {
+		MCPIssuer = strings.TrimRight(v, "/")
+	}
+	if v := os.Getenv("MCP_RESOURCE"); v != "" {
+		MCPResource = strings.TrimRight(v, "/")
+	}
 }

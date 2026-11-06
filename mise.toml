@@ -27,10 +27,10 @@ COMMIT_ID = "{{ exec(command='git rev-parse HEAD 2>/dev/null || echo unknown') }
 GO_LDFLAGS = "-s -w -X 'github.com/zxh326/kite/pkg/version.Version={{ env.VERSION }}' -X 'github.com/zxh326/kite/pkg/version.BuildDate={{ env.BUILD_DATE }}' -X 'github.com/zxh326/kite/pkg/version.CommitID={{ env.COMMIT_ID }}'"
 
 [tools]
-go = "1.24.9"
+go = "1.26.3"
 node = "24"
 pnpm = "10"
-golangci-lint = "2.1.6"
+golangci-lint = "2.15.0"
 # Local development cluster (see [daemons.kite-cluster] below).
 k3d = "5.9.0"
 kubectl = "1.35.10"

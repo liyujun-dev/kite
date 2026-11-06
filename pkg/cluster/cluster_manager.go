@@ -389,6 +389,15 @@ func syncClusters(cm *ClusterManager, readyCh chan<- struct{}) error {
 
 // shouldUpdateCluster decides whether the cached ClientSet needs to be updated
 // based on the desired state from the database.
+// serverVersion is a package variable so tests can stub the discovery call.
+var serverVersion = func(cs *ClientSet) (string, error) {
+	version, err := cs.K8sClient.ClientSet.Discovery().ServerVersion()
+	if err != nil {
+		return "", err
+	}
+	return version.String(), nil
+}
+
 func shouldUpdateCluster(cs *ClientSet, cluster *model.Cluster) bool {
 	// enable/disable toggle
 	if (cs == nil && cluster.Enable) || (cs != nil && !cluster.Enable) {
@@ -416,13 +425,11 @@ func shouldUpdateCluster(cs *ClientSet, cluster *model.Cluster) bool {
 	}
 
 	// k8s version change
-	// TODO: Replace direct ClientSet.Discovery() call with a small DiscoveryInterface.
-	// current code depends on *kubernetes.Clientset, which is hard to mock in tests.
-	version, err := cs.K8sClient.ClientSet.Discovery().ServerVersion()
+	version, err := serverVersion(cs)
 	if err != nil {
 		klog.Warningf("Failed to get server version for cluster %s: %v", cluster.Name, err)
-	} else if version.String() != cs.Version {
-		klog.Infof("Server version changed for cluster %s, updating, old: %s, new: %s", cluster.Name, cs.Version, version.String())
+	} else if version != cs.Version {
+		klog.Infof("Server version changed for cluster %s, updating, old: %s, new: %s", cluster.Name, cs.Version, version)
 		return true
 	}
 

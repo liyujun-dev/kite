@@ -106,6 +106,9 @@ func InitDB() {
 		ScheduledTask{},
 		Plugin{},
 		PluginSetting{},
+		MCPOAuthClient{},
+		MCPOAuthCode{},
+		MCPOAuthRefreshToken{},
 	}
 	for _, model := range models {
 		err = DB.AutoMigrate(model)

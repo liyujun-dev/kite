@@ -49,6 +49,9 @@ basePath: ""
 # Be careful with this setting in production
 anonymousUserEnabled: false
 
+# Set to false to disable the MCP endpoint and its OAuth endpoints
+mcpEnabled: true
+
 # Secret key for signing JWT tokens. Auto-generated if empty.
 # Ignored if using existingSecret
 jwtSecret: ""

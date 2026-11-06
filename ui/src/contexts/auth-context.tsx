@@ -37,7 +37,7 @@ interface AuthContextType {
   mfaEnabled: boolean
   passkeyLoginEnabled: boolean
   capabilities: BootstrapCapabilities
-  login: (provider?: string) => Promise<void>
+  login: (provider?: string, redirect?: string) => Promise<void>
   loginWithCredentials: (
     provider: CredentialProvider,
     username: string,
@@ -94,10 +94,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     await refetchBootstrap()
   }, [refetchBootstrap])
 
-  const login = useCallback(async (provider: string = 'github') => {
-    const { auth_url } = await initiateOAuthLogin(provider)
-    window.location.href = auth_url
-  }, [])
+  const login = useCallback(
+    async (provider: string = 'github', redirect?: string) => {
+      const { auth_url } = await initiateOAuthLogin(provider, redirect)
+      window.location.href = auth_url
+    },
+    []
+  )
 
   const loginWithCredentials = useCallback(
     async (

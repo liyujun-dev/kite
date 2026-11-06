@@ -156,6 +156,7 @@ export default defineConfig({
             { text: "Resource History", link: "/guide/resource-history" },
             { text: "Custom Sidebar", link: "/guide/custom-sidebar" },
             { text: "Kube Proxy", link: "/guide/kube-proxy" },
+            { text: "MCP Server", link: "/guide/mcp" },
           ],
         },
         {
@@ -223,6 +224,7 @@ export default defineConfig({
             { text: "资源历史", link: "/zh/guide/resource-history" },
             { text: "自定义侧边栏", link: "/zh/guide/custom-sidebar" },
             { text: "Kube Proxy", link: "/zh/guide/kube-proxy" },
+            { text: "MCP 服务", link: "/zh/guide/mcp" },
           ],
         },
         {
