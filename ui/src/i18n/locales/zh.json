@@ -1511,8 +1511,11 @@
     "copy": "复制",
     "copied": "已复制到剪贴板",
     "jsonLabel": "MCP JSON 配置",
-    "claudeLabel": "Claude Code",
-    "claudeCommand": "claude mcp add --transport http kite {{endpoint}}",
+    "tabs": {
+      "oauth": "浏览器登录",
+      "apiKey": "API Key"
+    },
+    "apiKeyHint": "使用已有的 Kite API Key（由管理员在 Settings → API Keys 创建），并把 kite<id>-<key> 替换为实际密钥。",
     "hint": "首次连接会打开浏览器登录并授权，工具权限跟随你的 RBAC 角色。",
     "openApiKeys": "API Keys"
   }

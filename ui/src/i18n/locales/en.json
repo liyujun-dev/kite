@@ -1424,8 +1424,11 @@
     "copy": "Copy",
     "copied": "Copied to clipboard",
     "jsonLabel": "MCP JSON config",
-    "claudeLabel": "Claude Code",
-    "claudeCommand": "claude mcp add --transport http kite {{endpoint}}",
+    "tabs": {
+      "oauth": "Browser login",
+      "apiKey": "API key"
+    },
+    "apiKeyHint": "Use an existing Kite API key, created by an administrator under Settings → API Keys, and replace kite<id>-<key> with it.",
     "hint": "The first connection opens a browser to sign in and authorize. Tools follow your RBAC permissions.",
     "openApiKeys": "API Keys"
   }
