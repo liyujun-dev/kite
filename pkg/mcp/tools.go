@@ -42,6 +42,7 @@ type resourceListInput struct {
 	Kind          string `json:"kind" jsonschema:"resource kind or plural name, for example pods, deployment, or a CRD plural"`
 	Namespace     string `json:"namespace,omitempty" jsonschema:"namespace; omit or use _all for all namespaces you can access"`
 	LabelSelector string `json:"label_selector,omitempty" jsonschema:"Kubernetes label selector, for example app=web"`
+	FieldSelector string `json:"field_selector,omitempty" jsonschema:"Kubernetes field selector, for example status.phase=Running or spec.nodeName=node-1"`
 	Limit         int    `json:"limit,omitempty" jsonschema:"maximum number of items to return (default 100, max 500)"`
 }
 
@@ -113,57 +114,68 @@ func registerTools(s *sdkmcp.Server, h *Handler) {
 
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "list_clusters",
-		Description: "List Kubernetes clusters the signed-in user can access. Call this before other cluster-scoped tools.",
+		Title:       "List Kubernetes Clusters",
+		Description: "List the Kubernetes clusters the signed-in user can access in Kite. Omit cluster on other tools to use the default cluster; call this only when the user names a cluster or you need to disambiguate.",
 		Annotations: readOnly,
 	}, h.listClusters)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "list_namespaces",
-		Description: "List namespaces in a cluster that the signed-in user can access.",
+		Title:       "List Kubernetes Namespaces",
+		Description: "List Kubernetes namespaces in a cluster that the signed-in user can access.",
 		Annotations: readOnly,
 	}, h.listNamespaces)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "list_resources",
-		Description: "List Kubernetes resources of a kind in a cluster, optionally filtered by namespace and label selector. Returns name, namespace, kind, creation time, and labels.",
+		Title:       "List Kubernetes Resources",
+		Description: "List Kubernetes resources such as pods, deployments, statefulsets, daemonsets, services, nodes, jobs, ingresses, PVCs, cronjobs, or CRDs. Returns name, namespace, kind, creation time, labels, and a compact kubectl get -o wide-style status block. Supports namespace, label_selector, field_selector, and limit. Use instead of `kubectl get`.",
 		Annotations: readOnly,
 	}, h.listResources)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "get_resource",
-		Description: "Get a single Kubernetes resource as JSON.",
+		Title:       "Get Kubernetes Resource",
+		Description: "Get one Kubernetes resource as JSON, including its full spec and status. Use instead of `kubectl get -o json`.",
 		Annotations: readOnly,
 	}, h.getResource)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "describe_resource",
-		Description: "Describe a Kubernetes resource using kubectl-style output. Falls back to YAML for custom resources without a describer.",
+		Title:       "Describe Kubernetes Resource",
+		Description: "Describe a Kubernetes resource with kubectl-style output, including recent events when show_events is true. Use instead of `kubectl describe`.",
 		Annotations: readOnly,
 	}, h.describeResource)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "get_pod_logs",
-		Description: "Get recent logs from a pod container. Requires the pod 'log' permission in RBAC.",
+		Title:       "Get Kubernetes Pod Logs",
+		Description: "Get recent logs from a pod container in a Kubernetes cluster. Use instead of `kubectl logs`.",
 		Annotations: readOnly,
 	}, h.getPodLogs)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "list_events",
-		Description: "List Kubernetes events, optionally filtered to one involved resource.",
+		Title:       "List Kubernetes Events",
+		Description: "List Kubernetes events in a namespace, optionally filtered to one involved resource. Use instead of `kubectl get events`.",
 		Annotations: readOnly,
 	}, h.listEvents)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "apply_resource",
-		Description: "Create or update a Kubernetes resource from a YAML manifest. Requires create or update permission and is recorded in resource history.",
+		Title:       "Apply Kubernetes Resource",
+		Description: "Create or update a Kubernetes resource from a YAML manifest. Requires create or update permission and is recorded in resource history. Use instead of `kubectl apply`.",
 		Annotations: &sdkmcp.ToolAnnotations{DestructiveHint: &nonDestructive, IdempotentHint: true},
 	}, h.applyResource)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "delete_resource",
-		Description: "Delete a Kubernetes resource. Requires delete permission and is recorded in resource history.",
+		Title:       "Delete Kubernetes Resource",
+		Description: "Delete a Kubernetes resource. Requires delete permission and is recorded in resource history. Use instead of `kubectl delete`.",
 		Annotations: &sdkmcp.ToolAnnotations{DestructiveHint: &destructive},
 	}, h.deleteResource)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "scale_resource",
-		Description: "Scale a Deployment, StatefulSet, or ReplicaSet. Requires update permission.",
+		Title:       "Scale Kubernetes Workload",
+		Description: "Scale a Kubernetes Deployment, StatefulSet, or ReplicaSet. Requires update permission. Use instead of `kubectl scale`.",
 		Annotations: &sdkmcp.ToolAnnotations{DestructiveHint: &nonDestructive, IdempotentHint: true},
 	}, h.scaleResource)
 	sdkmcp.AddTool(s, &sdkmcp.Tool{
 		Name:        "restart_workload",
-		Description: "Restart a Deployment, StatefulSet, or DaemonSet by updating its pod template annotation. Requires update permission and is recorded in resource history.",
+		Title:       "Restart Kubernetes Workload",
+		Description: "Restart a Kubernetes Deployment, StatefulSet, or DaemonSet by updating its pod template annotation. Requires update permission and is recorded in resource history. Use instead of `kubectl rollout restart`.",
 		Annotations: &sdkmcp.ToolAnnotations{DestructiveHint: &nonDestructive},
 	}, h.restartWorkload)
 }
@@ -259,8 +271,9 @@ func (h *Handler) listResources(ctx context.Context, req *sdkmcp.CallToolRequest
 	if err != nil {
 		return nil, nil, err
 	}
-	list, err := dyn.Resource(ref.gvr).Namespace(ref.namespaceOrAll(namespace)).List(ctx, metav1.ListOptions{
+	list, err := dyn.Resource(ref.gvr).Namespace(ref.listNamespace(namespace)).List(ctx, metav1.ListOptions{
 		LabelSelector: in.LabelSelector,
+		FieldSelector: in.FieldSelector,
 		Limit:         int64(limit),
 	})
 	if err != nil {
@@ -273,7 +286,7 @@ func (h *Handler) listResources(ctx context.Context, req *sdkmcp.CallToolRequest
 		if namespace := item.GetNamespace(); namespace != "" && !rbac.CanAccessNamespace(user, cs.Name, namespace) {
 			continue
 		}
-		items = append(items, summarize(item))
+		items = append(items, summarize(item, ref))
 	}
 	return jsonResult(map[string]any{
 		"cluster":   cs.Name,

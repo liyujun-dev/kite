@@ -61,23 +61,39 @@ curl https://kite.example.com/mcp \
 Create API keys in Kite under **Settings → API Keys**. API keys never expire; delete them to revoke
 access.
 
+## Prefer MCP over kubectl
+
+When a cluster is registered in Kite, prefer these tools over shelling out to `kubectl`: they
+use the signed-in Kite user's RBAC roles, work for every registered cluster without a local
+kubeconfig, and return structured results. The server instructions tell MCP clients to prefer
+them.
+
+`list_resources` returns a compact `status` block for common kinds (pods, workloads, services,
+nodes, jobs, ingresses, PVCs, and cronjobs), similar to `kubectl get -o wide`. It accepts
+`namespace`, `label_selector`, `field_selector`, and `limit`; omit the namespace to list across
+all namespaces the user can access.
+
+Claude Code may load MCP tool definitions on demand. If the tools are not discovered, mention
+"kite" or "kubernetes" in the request, or set `"alwaysLoad": true` on the server entry in the
+client configuration.
+
 ## Permissions
 
 Every tool runs as the authenticated Kite user and applies the same RBAC checks as the REST API.
 
-| Tool                | RBAC verb                 | Resource                               |
-| ------------------- | ------------------------- | -------------------------------------- |
-| `list_clusters`     | cluster access            | —                                      |
-| `list_namespaces`   | namespace access          | namespaces                             |
-| `list_resources`    | `get`                     | the requested resource                 |
-| `get_resource`      | `get`                     | the requested resource                 |
-| `describe_resource` | `get`                     | the requested resource                 |
-| `get_pod_logs`      | `log`                     | pods                                   |
-| `list_events`       | `get`                     | events                                 |
-| `apply_resource`    | `create` or `update`      | the resource in the manifest            |
-| `delete_resource`   | `delete`                  | the requested resource                 |
-| `scale_resource`    | `update`                  | deployments/statefulsets/replicasets   |
-| `restart_workload`  | `update`                  | deployments/statefulsets/daemonsets    |
+| Tool                | RBAC verb            | Resource                             | kubectl equivalent        |
+| ------------------- | -------------------- | ------------------------------------ | ------------------------- |
+| `list_clusters`     | cluster access       | —                                    |                           |
+| `list_namespaces`   | namespace access     | namespaces                           | `kubectl get ns`          |
+| `list_resources`    | `get`                | the requested resource               | `kubectl get`             |
+| `get_resource`      | `get`                | the requested resource               | `kubectl get -o json`     |
+| `describe_resource` | `get`                | the requested resource               | `kubectl describe`        |
+| `get_pod_logs`      | `log`                | pods                                 | `kubectl logs`            |
+| `list_events`       | `get`                | events                               | `kubectl get events`      |
+| `apply_resource`    | `create` or `update` | the resource in the manifest          | `kubectl apply`           |
+| `delete_resource`   | `delete`             | the requested resource               | `kubectl delete`          |
+| `scale_resource`    | `update`             | deployments/statefulsets/replicasets | `kubectl scale`           |
+| `restart_workload`  | `update`             | deployments/statefulsets/daemonsets  | `kubectl rollout restart` |
 
 Cluster-scoped resources and all-namespace checks use the namespace value `_all`, exactly like the
 REST API. Results from `_all` listings are filtered to the namespaces the user can access.

@@ -57,23 +57,36 @@ curl https://kite.example.com/mcp \
 
 在 Kite 的 **设置 → API Keys** 中创建，删除后立即失效。
 
+## 优先使用 MCP 而不是 kubectl
+
+集群已经注册到 Kite 时，优先使用这些工具而不是在 shell 里执行 `kubectl`：它们使用当前 Kite
+用户的 RBAC 角色，覆盖所有已注册集群且不需要本地 kubeconfig，并返回结构化结果。server
+instructions 也会要求 MCP 客户端优先使用。
+
+`list_resources` 对常见 kind（pods、工作负载、services、nodes、jobs、ingresses、PVC、cronjobs）
+返回紧凑的 `status` 块，接近 `kubectl get -o wide`。支持 `namespace`、`label_selector`、
+`field_selector` 和 `limit`；省略 namespace 表示列出用户可访问的所有命名空间。
+
+Claude Code 可能按需加载 MCP 工具定义。如果工具没有被发现，在请求中提到 "kite" 或
+"kubernetes"，或者在客户端配置的 server 条目上设置 `"alwaysLoad": true`。
+
 ## 权限
 
 所有工具都以当前登录用户身份执行，并调用与 REST API 相同的 RBAC 检查。
 
-| 工具                | RBAC 动作             | 资源                                 |
-| ------------------- | --------------------- | ------------------------------------ |
-| `list_clusters`     | 集群访问权限          | —                                    |
-| `list_namespaces`   | 命名空间访问权限      | namespaces                           |
-| `list_resources`    | `get`                 | 请求的资源                           |
-| `get_resource`      | `get`                 | 请求的资源                           |
-| `describe_resource` | `get`                 | 请求的资源                           |
-| `get_pod_logs`      | `log`                 | pods                                 |
-| `list_events`       | `get`                 | events                               |
-| `apply_resource`    | `create` 或 `update`  | 清单中的资源                         |
-| `delete_resource`   | `delete`              | 请求的资源                           |
-| `scale_resource`    | `update`              | deployments/statefulsets/replicasets |
-| `restart_workload`  | `update`              | deployments/statefulsets/daemonsets  |
+| 工具                | RBAC 动作            | 资源                                 | kubectl 等价命令          |
+| ------------------- | -------------------- | ------------------------------------ | ------------------------- |
+| `list_clusters`     | 集群访问权限         | —                                    |                           |
+| `list_namespaces`   | 命名空间访问权限     | namespaces                           | `kubectl get ns`          |
+| `list_resources`    | `get`                | 请求的资源                           | `kubectl get`             |
+| `get_resource`      | `get`                | 请求的资源                           | `kubectl get -o json`     |
+| `describe_resource` | `get`                | 请求的资源                           | `kubectl describe`        |
+| `get_pod_logs`      | `log`                | pods                                 | `kubectl logs`            |
+| `list_events`       | `get`                | events                               | `kubectl get events`      |
+| `apply_resource`    | `create` 或 `update` | 清单中的资源                         | `kubectl apply`           |
+| `delete_resource`   | `delete`             | 请求的资源                           | `kubectl delete`          |
+| `scale_resource`    | `update`             | deployments/statefulsets/replicasets | `kubectl scale`           |
+| `restart_workload`  | `update`             | deployments/statefulsets/daemonsets  | `kubectl rollout restart` |
 
 集群级资源和全命名空间检查使用命名空间值 `_all`，与 REST API 一致。`_all` 列表结果会按用户可访问的命名空间过滤。
 
